@@ -1,5 +1,7 @@
 sudo: required
 
+language: ruby
+
 services:
   - docker
 
@@ -11,3 +13,13 @@ before_install:
 script:
   - docker build -t alpine-build .
   - bats tests/*tests.bats
+
+after_success:
+  - >
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
+      curl -H "Content-Type: application/json" --data '{"source_type": "Branch", "source_name": "master"}' -X POST https://registry.hub.docker.com/u/hikarushindo/alpine/trigger/${DOCKERHUB_PUSH_TOKEN}/
+    fi
+  - >
+    if [ ! -z "$TRAVIS_TAG" ]; then
+      curl -H "Content-Type: application/json" --data '{"source_type": "Tag", "source_name": "${TRAVIS_TAG}"}' -X POST https://registry.hub.docker.com/u/hikarushindo/alpine/trigger/${DOCKERHUB_PUSH_TOKEN}/
+    fi
